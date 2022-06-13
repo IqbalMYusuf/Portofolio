@@ -1,2 +1,0 @@
-"continent","SUM(totalPopulation)","SUM(totalTest)","SUM(totalCases)","SUM(totalVac)","SUM(totalDeaths)","PercentageTested","PositivityRate","totalPercentageInfected","totalVaccinated","totalDeathPercentage"
-World,7874955821,14442377868,532349857,10197817760,6300406,183.39630337336973,3.68602637228824,6.7600,129.49682502098193,1.1835

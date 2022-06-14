@@ -717,7 +717,7 @@ FROM
 GROUP BY date
 ORDER BY 1,2
 
--- Data extraction to obtain data for visualization
+-- Merging the three table (location, continent, and world)
 -- Create virtual table that contain joined table with specific columns
 CREATE VIEW join_table AS
 (SELECT cd.continent, 
@@ -863,4 +863,97 @@ FROM
         (SELECT * FROM cont_daily)
      UNION
         (SELECT * FROM world_daily)) AS t
+ORDER BY 1,2
+
+-- Data extraction for visualization and dashboard
+-- Table for daily number for every location, and assign it as num_daily view
+CREATE VIEW num_daily AS
+(SELECT continent,
+       location,
+       date,
+       MAX(population) population,
+       SUM(IFNULL(new_cases,0)) AS new_cases,
+       SUM(IFNULL(new_deaths,0))AS new_deaths,
+       SUM(IFNULL(new_tests,0)) AS new_tests,
+       SUM(IFNULL(new_vaccinations,0))AS new_vaccinations
+FROM join_table
+WHERE continent IS NOT NULL AND location NOT IN ('European Union','High income', 'International','Low income','Lower middle income','Upper middle income','World')
+GROUP BY continent, location, date
+ORDER BY 2,3)
+
+-- Table for daily number for every continent, and assign it as num_continent view
+CREATE VIEW num_continent AS
+(SELECT t1.continent AS location,
+       t1.date,
+       t2.population,
+       t1.new_cases,
+       t1.new_deaths,
+       t1.new_tests,
+       t1.new_vaccinations
+FROM 
+    (SELECT continent,
+            date,
+            SUM(new_cases) AS new_cases,
+            SUM(new_deaths) AS new_deaths,
+            SUM(new_tests) AS new_tests,
+            SUM(new_vaccinations) AS new_vaccinations
+     FROM num_daily
+     GROUP BY continent, date
+     ORDER BY 1,2) AS t1
+LEFT JOIN
+    (SELECT continent,
+            SUM(population) AS population
+     FROM
+        (SELECT continent,
+                location,
+                MAX(population) AS population
+         FROM num_daily
+         GROUP BY continent, location) AS t 
+     GROUP BY continent) AS t2
+ON t1.continent = t2.continent
+ORDER BY 1,2)
+
+-- Table for daily number for world, and assign it as num_world view
+CREATE VIEW num_world AS 
+(SELECT t1.location,
+       t1.date,
+       t2.population,
+       t1.new_cases,
+       t1.new_deaths,
+       t1.new_tests,
+       t1.new_vaccinations
+FROM 
+    (SELECT 'World' AS location,
+            date,
+            SUM(new_cases) AS new_cases,
+            SUM(new_deaths) AS new_deaths,
+            SUM(new_tests) AS new_tests,
+            sum(new_vaccinations) AS new_vaccinations 
+     FROM num_continent
+     GROUP by date) AS t1
+LEFT JOIN 
+    (SELECT 'World' AS location,
+            SUM(population) AS population
+     FROM
+        (SELECT location,
+                MAX(population) AS population
+         FROM num_continent
+         GROUP BY location) AS t
+         ) AS t2
+ON t1.location = t2.location
+ORDER BY 1,2)
+
+-- Join the three table using union
+SELECT location,
+       date,
+       population,
+       new_cases,
+       new_deaths,
+       new_tests,
+       new_vaccinations
+FROM num_daily
+UNION
+    (SELECT * FROM num_continent)
+UNION
+    (SELECT * FROM num_world)
 ORDER BY 1,2

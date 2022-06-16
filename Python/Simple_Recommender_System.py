@@ -12,10 +12,10 @@ import numpy as np
 movie_df = pd.read_csv('https://storage.googleapis.com/dqlab-dataset/title.basics.tsv', sep='\t')
 rating_df = pd.read_csv('https://storage.googleapis.com/dqlab-dataset/title.ratings.tsv', sep='\t')
 
-'''print(movie_df.head())
-print(rating_df.head())'''
+print(movie_df.head())
+print(rating_df.head())
 
-''' # Check section
+# Check section
 # Checking data types in both dataframe
 print(movie_df.info())
 print(rating_df.info())
@@ -26,11 +26,11 @@ print(rating_df.isnull().sum()) # There is no null value in rating_df
 
 # Checking the occurence of null value in movie_df
 print(movie_df.loc[movie_df['primaryTitle'].isnull() | movie_df['originalTitle'].isnull()])
-print(movie_df.loc[movie_df['genres'].isnull()])'''
+print(movie_df.loc[movie_df['genres'].isnull()])
 # title, genres, startYear, and runtimeMinutes are needed, so we need to drop null value from those columns
 movie_df.dropna(inplace=True)
 
-''' # Check section
+# Check section
 # Check unique value for every columns
 for i in movie_df.columns:
     print (i)
@@ -43,7 +43,6 @@ for i in ['startYear', 'endYear', 'runtimeMinutes']:
 for i in ['startYear', 'endYear', 'runtimeMinutes']:
     print (i)
     print(movie_df[i].unique())
-'''
 
 # Change genre column values into lists
 def to_lists(x):
@@ -81,7 +80,7 @@ wr(movie_rating_df)
 # Creating simple recommender
 def simple_recommender(df, top=100):
     df = df.loc[df['numVotes'] >= df['numVotes'].quantile(0.8)] # Only selecting rows with numVotes >= m values
-    df = df[:top] # Hanya mengambil data n-teratas (nilai default 100)
+    df = df[:top] # Only take n-th top values (default 100)
     return df
 
 df = movie_rating_df.copy()

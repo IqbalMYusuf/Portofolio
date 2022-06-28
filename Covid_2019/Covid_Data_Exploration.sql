@@ -972,3 +972,5 @@ UNION
 UNION
     (SELECT * FROM num_world)
 ORDER BY 1,2
+
+-- Further data cleaning is executed by using python

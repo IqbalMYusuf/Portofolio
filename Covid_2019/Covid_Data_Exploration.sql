@@ -866,17 +866,32 @@ FROM
 ORDER BY 1,2
 
 -- Data extraction for visualization and dashboard
+-- Create view for joined table
+CREATE VIEW joined_table AS
+(SELECT cd.continent, 
+        cd.location,
+        cd.date,
+        cd.population,
+        cd.total_cases,
+        cd.total_deaths,
+        cv.total_tests,
+        cv.total_vaccinations 
+FROM Portofolio.CovidDeath cd 
+JOIN Portofolio.CovidVaccination cv 
+ON cd.location = cv.location  AND cd.date = cv.date
+ORDER BY cd.location, cd.date)
+
 -- Table for daily number for every location, and assign it as num_daily view
 CREATE VIEW num_daily AS
 (SELECT continent,
        location,
        date,
        MAX(population) population,
-       SUM(IFNULL(new_cases,0)) AS new_cases,
-       SUM(IFNULL(new_deaths,0))AS new_deaths,
-       SUM(IFNULL(new_tests,0)) AS new_tests,
-       SUM(IFNULL(new_vaccinations,0))AS new_vaccinations
-FROM join_table
+       MAX(total_cases) AS total_cases,
+       MAX(total_deaths) AS total_deaths,
+       MAX(total_tests) AS total_tests,
+       MAX(total_vaccinations) AS total_vaccinations
+FROM joined_table
 WHERE continent IS NOT NULL AND location NOT IN ('European Union','High income', 'International','Low income','Lower middle income','Upper middle income','World')
 GROUP BY continent, location, date
 ORDER BY 2,3)
@@ -886,17 +901,17 @@ CREATE VIEW num_continent AS
 (SELECT t1.continent AS location,
        t1.date,
        t2.population,
-       t1.new_cases,
-       t1.new_deaths,
-       t1.new_tests,
-       t1.new_vaccinations
+       t1.total_cases,
+       t1.total_deaths,
+       t1.total_tests,
+       t1.total_vaccinations
 FROM 
     (SELECT continent,
             date,
-            SUM(new_cases) AS new_cases,
-            SUM(new_deaths) AS new_deaths,
-            SUM(new_tests) AS new_tests,
-            SUM(new_vaccinations) AS new_vaccinations
+            MAX(total_cases) AS total_cases,
+            MAX(total_deaths) AS total_deaths,
+            MAX(total_tests) AS total_tests,
+            MAX(total_vaccinations) AS total_vaccinations
      FROM num_daily
      GROUP BY continent, date
      ORDER BY 1,2) AS t1
@@ -918,17 +933,17 @@ CREATE VIEW num_world AS
 (SELECT t1.location,
        t1.date,
        t2.population,
-       t1.new_cases,
-       t1.new_deaths,
-       t1.new_tests,
-       t1.new_vaccinations
+       t1.total_cases,
+       t1.total_deaths,
+       t1.total_tests,
+       t1.total_vaccinations
 FROM 
     (SELECT 'World' AS location,
             date,
-            SUM(new_cases) AS new_cases,
-            SUM(new_deaths) AS new_deaths,
-            SUM(new_tests) AS new_tests,
-            sum(new_vaccinations) AS new_vaccinations 
+            MAX(total_cases) AS total_cases,
+            MAX(total_deaths) AS total_deaths,
+            MAX(total_tests) AS total_tests,
+            MAX(total_vaccinations) AS total_vaccinations
      FROM num_continent
      GROUP by date) AS t1
 LEFT JOIN 
@@ -947,10 +962,10 @@ ORDER BY 1,2)
 SELECT location,
        date,
        population,
-       new_cases,
-       new_deaths,
-       new_tests,
-       new_vaccinations
+       total_cases,
+       total_deaths,
+       total_tests,
+       total_vaccinations
 FROM num_daily
 UNION
     (SELECT * FROM num_continent)
